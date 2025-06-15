@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RemoteX - Control PC</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            color: white;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container {
+            padding: 20px;
+            max-width: 420px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .floating-orbs {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1), transparent);
+            animation: float 20s infinite linear;
+        }
+
+        .orb:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .orb:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 15%;
+            animation-delay: -5s;
+        }
+
+        .orb:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            bottom: 30%;
+            left: 20%;
+            animation-delay: -10s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-30px) rotate(120deg); }
+            66% { transform: translateY(20px) rotate(240deg); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, #fff, #f0f8ff, #e6f3ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            text-shadow: 0 0 30px rgba(255,255,255,0.3);
+        }
+
+        .header .subtitle {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glassmorphism::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .connection-panel {
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            opacity: 0.9;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            font-size: 16px;
+            font-weight: 500;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .btn {
+            width: 100%;
+            padding: 18px;
+            border: none;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transition: all 0.6s;
+            transform: translate(-50%, -50%);
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #4CAF50, #45a049, #66bb6a);
+            color: white;
+            box-shadow: 0 10px 30px rgba(76, 175, 80, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(45deg, #f44336, #d32f2f, #ef5350);
+            color: white;
+            box-shadow: 0 10px 30px rgba(244, 67, 54, 0.3);
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(244, 67, 54, 0.4);
+        }
+
+        .status {
+            text-align: center;
+            padding: 16px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+            font-weight: 600;
+            font-size: 1rem;
+            position: relative;
+            z-index: 1;
+            transition: all 0.3s ease;
+        }
+
+        .status.connected {
+            background: linear-gradient(45deg, rgba(76, 175, 80, 0.3), rgba(102, 187, 106, 0.3));
+            border: 2px solid #4CAF50;
+            box-shadow: 0 0 25px rgba(76, 175, 80, 0.3);
+        }
+
+        .status.disconnected {
+            background: linear-gradient(45deg, rgba(244, 67, 54, 0.3), rgba(239, 83, 80, 0.3));
+            border: 2px solid #f44336;
+            box-shadow: 0 0 25px rgba(244, 67, 54, 0.3);
+        }
+
+        .control-panel {
+            display: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        .control-section {
+            padding: 25px;
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            text-align: center;
+            background: linear-gradient(45deg, #fff, #f0f8ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .touchpad {
+            background: linear-gradient(145deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+            border-radius: 24px;
+            height: 380px;
+            margin-bottom: 20px;
+            position: relative;
+            touch-action: none;
+            cursor: pointer;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 0 50px rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .touchpad:active {
+            transform: scale(0.98);
+            box-shadow: inset 0 0 60px rgba(255,255,255,0.2);
+        }
+
+        .touchpad::after {
+            content: 'TOUCHPAD';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.3rem;
+            font-weight: 300;
+            opacity: 0.3;
+            letter-spacing: 3px;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .touch-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple 0.6s linear;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes ripple {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+
+        .touch-trail {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            animation: trailFade 0.8s ease-out forwards;
+            z-index: 2;
+            box-shadow: 0 0 15px rgba(255,255,255,0.5);
+        }
+
+        @keyframes trailFade {
+            0% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.3);
+            }
+        }
+
+        .mouse-buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .mouse-btn {
+            flex: 1;
+            padding: 18px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mouse-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .keyboard-section {
+            margin-top: 20px;
+        }
+
+        .text-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: none;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .text-input:focus {
+            outline: none;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .keyboard-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .key {
+            padding: 12px 16px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.25), rgba(255,255,255,0.15));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            min-width: 50px;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .key:active {
+            transform: scale(0.9);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .key.wide {
+            flex: 1;
+            max-width: 200px;
+        }
+
+        .media-controls {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .media-btn {
+            padding: 16px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-btn:active {
+            transform: scale(0.9);
+        }
+
+        .volume-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .power-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .btn-warning {
+            background: linear-gradient(45deg, #ff9800, #f57c00, #ffb74d);
+            color: white;
+            box-shadow: 0 10px 30px rgba(255, 152, 0, 0.3);
+        }
+
+        .btn-warning:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(255, 152, 0, 0.4);
+        }
+
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(76, 175, 80, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(76, 175, 80, 0); }
+        }
+
+        .connection-indicator {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #4CAF50;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
+            display: none;
+        }
+
+        .connection-indicator.active {
+            display: block;
+            animation: pulse-dot 2s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .control-section {
+                padding: 20px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .touchpad {
+                height: 300px;
+            }
+        }
+
+        /* Animaciones de entrada */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="floating-orbs">
+        <div class="orb"></div>
+        <div class="orb"></div>
+        <div class="orb"></div>
+    </div>
+
+    <div class="container">
+        <div class="header fade-in">
+            <h1>RemoteX</h1>
+            <div class="subtitle">Control Total de tu PC</div>
+        </div>
+
+        <div class="connection-panel glassmorphism fade-in">
+            <div class="connection-indicator" id="connectionIndicator"></div>
+            <div class="input-group">
+                <label for="ip">🌐 Dirección IP</label>
+                <div class="input-wrapper">
+                    <input type="text" id="ip" placeholder="192.168.1.100" value="192.168.1.100">
+                </div>
+            </div>
+            <div class="input-group">
+                <label for="port">🔌 Puerto</label>
+                <div class="input-wrapper">
+                    <input type="number" id="port" placeholder="8888" value="8888">
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="connect()">🚀 Conectar</button>
+            <button class="btn btn-danger" onclick="disconnect()" style="display: none;">🔌 Desconectar</button>
+        </div>
+
+        <div class="status disconnected" id="status">
+            ⭕ Desconectado
+        </div>
+
+        <div class="control-panel" id="controlPanel">
+            <!-- Panel de Mouse -->
+            <div class="control-section glassmorphism fade-in">
+                <div class="section-title">🖱️ Control de Mouse</div>
+                <div class="touchpad" id="touchpad"></div>
+                <div class="mouse-buttons">
+                    <button class="mouse-btn" onmousedown="mouseClick('left')">👆 Click Izq</button>
+                    <button class="mouse-btn" onmousedown="mouseClick('right')">👆 Click Der</button>
+                </div>
+            </div>
+
+            <!-- Panel de Teclado -->
+            <div class="control-section glassmorphism fade-in">
+                <div class="section-title">⌨️ Teclado Virtual</div>
+                <input type="text" class="text-input" id="textInput" placeholder="Escribe tu mensaje aquí...">
+                <button class="btn btn-primary" onclick="sendText()">📝 Enviar Texto</button>
+                
+                <div class="keyboard-section">
+                    <div class="keyboard-row">
+                        <button class="key" onclick="sendKey('ctrl', 'c')">Ctrl+C</button>
+                        <button class="key" onclick="sendKey('ctrl', 'v')">Ctrl+V</button>
+                        <button class="key" onclick="sendKey('ctrl', 'z')">Ctrl+Z</button>
+                        <button class="key" onclick="sendKey('ctrl', 'y')">Ctrl+Y</button>
+                    </div>
+                    
+                    <div class="keyboard-row">
+                        <button class="key" onclick="sendKey('alt', 'tab')">Alt+Tab</button>
+                        <button class="key" onclick="sendKey('win')">🪟 Win</button>
+                        <button class="key" onclick="sendKey('enter')">↵ Enter</button>
+                    </div>
+
+                    <div class="keyboard-row">
+                        <button class="key" onclick="sendKey('up')">↑</button>
+                    </div>
+                    <div class="keyboard-row">
+                        <button class="key" onclick="sendKey('left')">←</button>
+                        <button class="key" onclick="sendKey('down')">↓</button>
+                        <button class="key" onclick="sendKey('right')">→</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controles de Media -->
+            <div class="control-section glassmorphism fade-in">
+                <div class="section-title">🎵 Control de Media</div>
+                <div class="media-controls">
+                    <button class="media-btn" onclick="mediaControl('prev')">⏮️</button>
+                    <button class="media-btn" onclick="mediaControl('playpause')">⏯️</button>
+                    <button class="media-btn" onclick="mediaControl('next')">⏭️</button>
+                </div>
+                
+                <div class="volume-controls">
+                    <button class="media-btn" onclick="volumeControl('down')">🔉</button>
+                    <button class="media-btn" onclick="volumeControl('mute')">🔇</button>
+                    <button class="media-btn" onclick="volumeControl('up')">🔊</button>
+                </div>
+            </div>
+
+            <!-- Controles de Sistema -->
+            <div class="control-section glassmorphism fade-in">
+                <div class="section-title">⚡ Control del Sistema</div>
+                <div class="power-controls">
+                    <button class="btn btn-warning" onclick="systemControl('sleep')">💤 Suspender</button>
+                    <button class="btn btn-danger" onclick="systemControl('shutdown')">🔴 Apagar PC</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let isConnected = false;
+        let lastTouch = { x: 0, y: 0 };
+
+        function connect() {
+            const ip = document.getElementById('ip').value;
+            const port = document.getElementById('port').value;
+            
+            if (!ip || !port) {
+                alert('🚨 Por favor ingresa IP y puerto');
+                return;
+            }
+
+            try {
+                ws = new WebSocket(`ws://${ip}:${port}`);
+                
+                ws.onopen = function() {
+                    isConnected = true;
+                    updateStatus('✅ Conectado exitosamente', true);
+                    document.querySelector('.btn-primary').style.display = 'none';
+                    document.querySelector('.btn-danger').style.display = 'block';
+                    document.getElementById('controlPanel').style.display = 'block';
+                    document.getElementById('connectionIndicator').classList.add('active');
+                    
+                    // Vibración de éxito (si está disponible)
+                    if (navigator.vibrate) {
+                        navigator.vibrate([100, 50, 100]);
+                    }
+                };
+
+                ws.onclose = function() {
+                    isConnected = false;
+                    updateStatus('⭕ Conexión perdida', false);
+                    document.querySelector('.btn-primary').style.display = 'block';
+                    document.querySelector('.btn-danger').style.display = 'none';
+                    document.getElementById('controlPanel').style.display = 'none';
+                    document.getElementById('connectionIndicator').classList.remove('active');
+                };
+
+                ws.onerror = function() {
+                    alert('🚨 Error de conexión. Verifica IP y puerto.');
+                };
+
+            } catch (error) {
+                alert('🚨 Error: ' + error.message);
+            }
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+            }
+        }
+
+        function updateStatus(message, connected) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = 'status ' + (connected ? 'connected pulse' : 'disconnected');
+        }
+
+        function sendCommand(command) {
+            if (ws && isConnected) {
+                ws.send(JSON.stringify(command));
+                
+                // Feedback táctil
+                if (navigator.vibrate) {
+                    navigator.vibrate(50);
+                }
+            }
+        }
+
+        // Configurar touchpad
+        const touchpad = document.getElementById('touchpad');
+        let isDragging = false;
+        let touchStartTime = 0;
+
+        function createRipple(x, y) {
+            const ripple = document.createElement('div');
+            ripple.className = 'touch-ripple';
+            ripple.style.left = x + 'px';
+            ripple.style.top = y + 'px';
+            ripple.style.width = '20px';
+            ripple.style.height = '20px';
+            touchpad.appendChild(ripple);
+            
+            setTimeout(() => {
+                if (ripple.parentNode) {
+                    ripple.parentNode.removeChild(ripple);
+                }
+            }, 600);
+        }
+
+        function createTrail(x, y) {
+            const trail = document.createElement('div');
+            trail.className = 'touch-trail';
+            trail.style.left = x + 'px';
+            trail.style.top = y + 'px';
+            touchpad.appendChild(trail);
+            
+            setTimeout(() => {
+                if (trail.parentNode) {
+                    trail.parentNode.removeChild(trail);
+                }
+            }, 800);
+        }
+
+        touchpad.addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = touchpad.getBoundingClientRect();
+            lastTouch.x = touch.clientX - rect.left;
+            lastTouch.y = touch.clientY - rect.top;
+            touchStartTime = Date.now();
+            isDragging = false;
+            
+            // Crear efecto visual en el punto de toque
+            createRipple(lastTouch.x, lastTouch.y);
+        });
+
+        touchpad.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = touchpad.getBoundingClientRect();
+            const currentX = touch.clientX - rect.left;
+            const currentY = touch.clientY - rect.top;
+            
+            const dx = (currentX - lastTouch.x) * 2.8;
+            const dy = (currentY - lastTouch.y) * 2.8;
+            
+            sendCommand({
+                type: 'mouse_move_rel',
+                dx: Math.round(dx),
+                dy: Math.round(dy)
+            });
+            
+            // Crear trail visual durante el movimiento
+            createTrail(currentX, currentY);
+            
+            lastTouch.x = currentX;
+            lastTouch.y = currentY;
+            isDragging = true;
+        });
+
+        touchpad.addEventListener('touchend', function(e) {
+            e.preventDefault();
+            if (e.touches.length === 0) {
+                const touchDuration = Date.now() - touchStartTime;
+                setTimeout(() => {
+                    // Solo hacer click si fue un tap rápido y no se arrastró
+                    if (!isDragging && touchDuration < 200) {
+                        mouseClick('left');
+                        // Crear un ripple más grande para el click
+                        createRipple(lastTouch.x, lastTouch.y);
+                    }
+                    isDragging = false;
+                }, 50);
+            }
+        });
+
+        // Eventos del mouse para escritorio
+        touchpad.addEventListener('mousedown', function(e) {
+            e.preventDefault();
+            lastTouch.x = e.offsetX;
+            lastTouch.y = e.offsetY;
+            isDragging = false;
+            touchStartTime = Date.now();
+            
+            // Crear efecto visual
+            createRipple(lastTouch.x, lastTouch.y);
+        });
+
+        touchpad.addEventListener('mousemove', function(e) {
+            if (e.buttons === 1) {
+                const dx = (e.offsetX - lastTouch.x) * 2.8;
+                const dy = (e.offsetY - lastTouch.y) * 2.8;
+                
+                sendCommand({
+                    type: 'mouse_move_rel',
+                    dx: Math.round(dx),
+                    dy: Math.round(dy)
+                });
+                
+                // Crear trail visual
+                createTrail(e.offsetX, e.offsetY);
+                
+                lastTouch.x = e.offsetX;
+                lastTouch.y = e.offsetY;
+                isDragging = true;
+            }
+        });
+
+        touchpad.addEventListener('mouseup', function(e) {
+            e.preventDefault();
+            const clickDuration = Date.now() - touchStartTime;
+            setTimeout(() => {
+                // Solo hacer click si fue un click rápido y no se arrastró
+                if (!isDragging && click
